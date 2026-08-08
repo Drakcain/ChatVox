@@ -1,0 +1,24 @@
+.vs/
+**/bin/
+**/obj/
+build/
+READY TO INSTALL/
+releases/
+TestResults/
+*.user
+*.suo
+*.pdb
+*.log
+.env
+.env.*
+kokoro-fp16.onnx
+auth.bin
+settings.json
+updates/
+runtime/
+_backups/
+*.dmp
+*.tmp
+/Filtering/
+/Settings/
+/Updates/

@@ -1,0 +1,2 @@
+namespace ChatVox.Twitch;
+public sealed class EventDeduplicator(TimeSpan? ttl=null,int max=1000){readonly Dictionary<string,DateTimeOffset> seen=[];readonly TimeSpan life=ttl??TimeSpan.FromMinutes(10); public bool First(string id,DateTimeOffset now){foreach(var k in seen.Where(x=>now-x.Value>life).Select(x=>x.Key).ToArray())seen.Remove(k);if(seen.ContainsKey(id))return false;while(seen.Count>=max)seen.Remove(seen.OrderBy(x=>x.Value).First().Key);seen[id]=now;return true;}}

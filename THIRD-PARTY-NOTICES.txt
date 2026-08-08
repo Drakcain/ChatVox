@@ -1,0 +1,49 @@
+ChatVox Third-Party Notices
+Version: 1.0.0-rc.4
+Generated for the eSpeak-free English edition.
+
+ChatVox does not include eSpeak or eSpeak NG code, binaries, data files, or
+voices-zh assets in this release.
+
+Bundled components
+==================
+
+KokoroSharp.CPU 0.8.0 and KokoroSharp 0.8.0
+License: MIT
+Source: https://github.com/Lyrcaxis/KokoroSharp
+NuGet package commit: 0e26ae0cdb2f612d3018cbf11b06daad69cc048c
+
+MisakiSharp 1.0.0
+License: Apache License 2.0
+Source: https://github.com/Lyrcaxis/MisakiSharp
+NuGet package commit: b20a5b001001933cb95e1ad642458772ddb169fc
+
+Kokoro model and retained English voice assets
+License: Apache License 2.0
+Source: https://huggingface.co/hexgrad/Kokoro-82M
+
+Microsoft.ML.OnnxRuntime and Microsoft.ML.OnnxRuntime.Managed 1.22.0
+License: MIT. The package's accompanying third-party notices apply.
+Source: https://github.com/microsoft/onnxruntime
+NuGet package commit: f217402897f40ebba457e2421bc0a4702771968e
+
+NAudio, NAudio.Asio, NAudio.Core, NAudio.Midi, NAudio.Wasapi,
+NAudio.WinForms, and NAudio.WinMM 2.2.1
+License: MIT
+Source: https://github.com/naudio/NAudio
+
+NumSharp 0.30.0
+License: Apache License 2.0
+Source: https://github.com/SciSharp/NumSharp
+
+OpenTK.Audio.OpenAL, OpenTK.Core, and OpenTK.Mathematics 5.0.0-pre.13
+License: MIT
+Source: https://github.com/opentk/opentk
+
+System.Numerics.Tensors 9.0.5
+License: MIT
+Source: https://github.com/dotnet/runtime
+
+License texts and package-specific attribution references are listed in
+LICENSES\README.md. This notice file describes bundled third-party components;
+it does not grant a license for ChatVox source code.

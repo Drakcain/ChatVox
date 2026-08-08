@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ChatVox/ChatVox.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ChatVox.Tests/ChatVox.Tests.csproj" />
+  </Folder>
+</Solution>

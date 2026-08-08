@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Version>1.0.0-rc.5</Version>
+    <ApplicationIcon>$(MSBuildProjectDirectory)\..\..\assets\branding\ChatVox.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KokoroSharp.CPU" Version="0.8.0" />
+    <None Include="$(MSBuildProjectDirectory)\..\..\kokoro-fp16.onnx" Link="kokoro-fp16.onnx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="$(MSBuildProjectDirectory)\..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="$(MSBuildProjectDirectory)\..\..\LICENSES\*" Link="LICENSES\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Resource Include="$(MSBuildProjectDirectory)\..\..\assets\branding\ChatVox.ico" Link="assets\branding\ChatVox.ico" />
+  </ItemGroup>
+
+  <Target Name="ConstrainKokoroRuntimeAssets" AfterTargets="Build">
+    <ItemGroup>
+      <UnsupportedKokoroVoiceAssets Include="$(OutDir)voices\*.npy" Exclude="$(OutDir)voices\af_*.npy;$(OutDir)voices\am_*.npy;$(OutDir)voices\bf_*.npy;$(OutDir)voices\bm_*.npy" />
+    </ItemGroup>
+    <Delete Files="@(UnsupportedKokoroVoiceAssets)" />
+    <RemoveDir Directories="$(OutDir)voices\voices-zh;$(OutDir)espeak" />
+  </Target>
+
+  <Target Name="CopyKokoroRuntimeAssetsToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <KokoroEnglishVoiceAssets Include="$(OutDir)voices\af_*.npy;$(OutDir)voices\am_*.npy;$(OutDir)voices\bf_*.npy;$(OutDir)voices\bm_*.npy" />
+    </ItemGroup>
+    <Copy SourceFiles="@(KokoroEnglishVoiceAssets)" DestinationFiles="@(KokoroEnglishVoiceAssets->'$(PublishDir)voices\%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <RemoveDir Directories="$(PublishDir)voices\voices-zh;$(PublishDir)espeak" />
+  </Target>
+
+</Project>

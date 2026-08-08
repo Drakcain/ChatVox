@@ -1,0 +1,15 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - shell: pwsh
+        run: Invoke-WebRequest https://huggingface.co/hexgrad/Kokoro-82M/resolve/main/kokoro-v1.0.fp16.onnx -OutFile kokoro-fp16.onnx
+      - run: dotnet restore .\ChatVox.slnx
+      - run: dotnet build .\ChatVox.slnx -c Release --no-restore
+      - run: dotnet test .\ChatVox.slnx -c Release --no-build --no-restore
