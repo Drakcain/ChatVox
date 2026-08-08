@@ -22,3 +22,7 @@ _backups/
 /Filtering/
 /Settings/
 /Updates/
+!src/
+!src/ChatVox/
+!src/ChatVox/Updates/
+!src/ChatVox/Updates/*.cs
