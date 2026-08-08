@@ -125,7 +125,7 @@ public sealed class UpdateService
     private sealed record ParsedVersion(Version Core, string? Pre);
     private static bool TryParseVersion(string value, out ParsedVersion result)
     {
-        var match = Regex.Match(value, "^(?<core>\\d+\\.\\d+\\.\\d+)(?:-(?<pre>[0-9A-Za-z.-]+))?$");
+        var match = Regex.Match(value, "^(?<core>\\d+\\.\\d+\\.\\d+)(?:-(?<pre>[0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$");
         if (!match.Success) { result = null!; return false; }
         result = new(Version.Parse(match.Groups["core"].Value), match.Groups["pre"].Success ? match.Groups["pre"].Value : null); return true;
     }

@@ -63,6 +63,7 @@ public sealed class Rc3UxTests
     {
         Assert.True(UpdateService.CompareVersions("1.0.0-rc.4", "1.0.0-rc.3") > 0);
         Assert.True(UpdateService.CompareVersions("1.0.0", "1.0.0-rc.4") > 0);
+        Assert.Equal(0, UpdateService.CompareVersions("1.0.0-rc.5+build.123", "1.0.0-rc.5"));
         Assert.Equal(0, UpdateService.CompareVersions("1.0.0-rc.3", "1.0.0-rc.3"));
     }
 
