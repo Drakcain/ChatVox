@@ -8,7 +8,7 @@ $modelHash = '027A25B14AEF7D3AE57FD09301EBEFBEC868E79D55213D07E4F3AF442F5BA352'
 
 if (-not (Test-Path -LiteralPath $modelPath)) {
     Write-Host 'Downloading the build-time Kokoro model...'
-    Invoke-WebRequest -Uri 'https://huggingface.co/hexgrad/Kokoro-82M/resolve/main/kokoro-v1.0.fp16.onnx' -OutFile $modelPath
+    Invoke-WebRequest -Uri 'https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v2.0.0/kokoro-fp16.onnx' -OutFile $modelPath
 }
 if ((Get-FileHash -LiteralPath $modelPath -Algorithm SHA256).Hash -ne $modelHash) { throw 'Kokoro model checksum mismatch.' }
 
