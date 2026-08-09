@@ -24,5 +24,7 @@ _backups/
 /Updates/
 !src/
 !src/ChatVox/
+!src/ChatVox/Runtime/
+!src/ChatVox/Runtime/*.cs
 !src/ChatVox/Updates/
 !src/ChatVox/Updates/*.cs

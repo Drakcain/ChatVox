@@ -14,7 +14,7 @@ public class CoreTests
     [Fact]
     public void ReleaseCandidateVersionIsAuthoritative()
     {
-        Assert.StartsWith("1.0.0-rc.5", typeof(Voices).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+        Assert.StartsWith("1.0.0-rc.6", typeof(Voices).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
     }
 
     [Fact]
@@ -77,6 +77,40 @@ public class CoreTests
         Assert.Equal("af_bella", saved.Voice);
         Assert.Equal("Bella (American Female)", Voices.LabelFor(saved.Voice));
         File.Delete(path);
+    }
+
+    [Fact]
+    public void VoiceAssetCacheCopiesBundledAssetsToUserWritableRuntimeLocation()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var source = Path.Combine(root, "installed", "voices");
+        var cache = Path.Combine(root, "localappdata", "ChatVox", "speech", "voices");
+        Directory.CreateDirectory(source);
+        var sourceVoice = Path.Combine(source, "af_heart.npy");
+        File.WriteAllBytes(sourceVoice, [1, 2, 3, 4]);
+        var result = VoiceAssetCache.Ensure(source, cache);
+        Assert.Equal(1, result.RefreshedAssets);
+        Assert.Equal([1, 2, 3, 4], File.ReadAllBytes(Path.Combine(cache, "af_heart.npy")));
+        Assert.Equal([1, 2, 3, 4], File.ReadAllBytes(sourceVoice));
+        Directory.Delete(root, true);
+    }
+
+    [Fact]
+    public void VoiceAssetCacheRepairsCorruptionAndRemovesOnlyObsoleteManagedAssets()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var source = Path.Combine(root, "installed", "voices");
+        var cache = Path.Combine(root, "localappdata", "ChatVox", "speech", "voices");
+        Directory.CreateDirectory(source); Directory.CreateDirectory(cache);
+        File.WriteAllBytes(Path.Combine(source, "af_heart.npy"), [1, 2, 3, 4]);
+        File.WriteAllBytes(Path.Combine(cache, "af_heart.npy"), [9, 9, 9, 9]);
+        File.WriteAllBytes(Path.Combine(cache, "obsolete_voice.npy"), [1]);
+        var result = VoiceAssetCache.Ensure(source, cache);
+        Assert.Equal(1, result.RefreshedAssets);
+        Assert.Equal(1, result.RemovedObsoleteAssets);
+        Assert.Equal([1, 2, 3, 4], File.ReadAllBytes(Path.Combine(cache, "af_heart.npy")));
+        Assert.False(File.Exists(Path.Combine(cache, "obsolete_voice.npy")));
+        Directory.Delete(root, true);
     }
 
     [Fact]

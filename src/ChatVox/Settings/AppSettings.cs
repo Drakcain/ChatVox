@@ -29,6 +29,11 @@ public sealed class AppSettings
     public string? LatestKnownEligibleRelease { get; set; }
     public string? UpdateEtag { get; set; }
     public List<string> IgnoredUsers { get; set; } = [.. DefaultIgnoredUsers];
+    public double? WindowLeft { get; set; }
+    public double? WindowTop { get; set; }
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
+    public bool WindowWasMaximized { get; set; }
 
     public void Normalize()
     {
@@ -44,6 +49,10 @@ public sealed class AppSettings
         IgnoredUsers = IgnoredUsers.Select(x => x.Trim()).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (LastUpdateCheckUtc is { } last && last > DateTimeOffset.UtcNow.AddDays(1)) LastUpdateCheckUtc = null;
         if (!Enum.IsDefined(UpdateChannel)) UpdateChannel = UpdateChannel.Preview;
+        if (WindowWidth is <= 0) WindowWidth = null;
+        if (WindowHeight is <= 0) WindowHeight = null;
+        if (WindowLeft is not { } left || double.IsNaN(left) || double.IsInfinity(left)) WindowLeft = null;
+        if (WindowTop is not { } top || double.IsNaN(top) || double.IsInfinity(top)) WindowTop = null;
     }
 }
 

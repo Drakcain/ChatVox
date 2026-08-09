@@ -14,6 +14,7 @@ using ChatVox.Settings;
 using ChatVox.Speech;
 using ChatVox.Twitch;
 using ChatVox.Updates;
+using ChatVox.Windowing;
 using Forms = System.Windows.Forms;
 using Clipboard = System.Windows.Clipboard;
 using Color = System.Windows.Media.Color;
@@ -45,11 +46,12 @@ public partial class MainWindow : Window
     private TokenValidation? activeIdentity;
     private bool paused, loading = true;
     private bool allowExit, cleanupStarted;
+    private WindowState lastVisibleWindowState = WindowState.Normal;
     private int startupRestoreAttempt;
     private Forms.NotifyIcon? trayIcon;
     private Forms.ToolStripMenuItem? trayPauseItem;
     private UpdateCheckResult? pendingUpdate;
-    private string version = "1.0.0-rc.5";
+    private string version = "1.0.0-rc.6";
 
     public MainWindow()
     {
@@ -75,8 +77,9 @@ public partial class MainWindow : Window
         worker.Diagnostic += line => { if (line.Contains("exception", StringComparison.OrdinalIgnoreCase) || line.Contains("stopped", StringComparison.OrdinalIgnoreCase)) log.Write("WORKER", line); };
         AppendDiagnostic("queue/speech worker ready");
         InitializeTray();
+        SourceInitialized += (_, _) => RestoreWindowPlacement();
         ContentRendered += async (_, _) => await InitializeConsumerStartupAsync();
-        StateChanged += (_, _) => { if (WindowState == WindowState.Minimized) HideToTray(); };
+        StateChanged += OnWindowStateChanged;
         Closing += OnWindowClosing;
     }
 
@@ -250,6 +253,7 @@ public partial class MainWindow : Window
     private void HideToTray()
     {
         if (allowExit || !IsLoaded) return;
+        CaptureWindowPlacement();
         Hide(); ShowInTaskbar = false;
         Log("TRAY", "hidden");
     }
@@ -258,16 +262,19 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            Show(); ShowInTaskbar = true; WindowState = WindowState.Normal; Activate(); Topmost = true; Topmost = false; Focus();
+            Show(); ShowInTaskbar = true; WindowState = lastVisibleWindowState; Activate(); Topmost = true; Topmost = false; Focus();
             Log("TRAY", "restored");
         });
     }
+
+    public void RestoreFromSecondaryLaunch() => RestoreFromTray();
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
         if (!allowExit)
         {
             e.Cancel = true;
+            CaptureWindowPlacement();
             HideToTray();
         }
     }
@@ -293,6 +300,7 @@ public partial class MainWindow : Window
         cleanupStarted = true;
         appStopping.Cancel();
         await StopTwitchAsync();
+        CaptureWindowPlacement();
         settingsStore.Save(settings);
         await worker.DisposeAsync();
         kokoro.Dispose();
@@ -512,4 +520,48 @@ public partial class MainWindow : Window
     private static string FormatTime(DateTimeOffset? time) => time?.ToString("yyyy-MM-dd HH:mm:ss 'UTC'") ?? "not yet";
     private void RefreshDiagnostics() => DiagnosticsText.Text = $"Version: {version}\nTwitch: {health.State switch { TwitchState.AuthorizationRequired => "Authorization Required", TwitchState.NetworkError => "Network Error", TwitchState.TwitchError => "Twitch Error", _ => health.State.ToString() }}\nTTS: {(paused ? "Paused" : worker.IsSpeaking ? "Speaking" : "Ready")}\nQueue: {queue.Count} / {queue.Max}  •  max age {settings.MaxAgeSeconds}s  •  gap {settings.SpeechGapMilliseconds}ms\nValidation: {health.LastValidationResult}  •  last success {FormatTime(health.LastSuccessfulValidation)}\nEventSub: last connected {FormatTime(health.LastSuccessfulEventSubConnection)}  •  reconnect attempt {health.ReconnectAttempt}\nStartup with Windows: {(startupService.Read().Enabled ? "Enabled" : "Disabled")}  •  Start minimized: {(settings.StartMinimizedToTray ? "Enabled" : "Disabled")}  •  Tray: {(IsVisible ? "Visible" : "Hidden")}\nLast Twitch error: {health.LastSafeError ?? "none"}\n\n{string.Join(Environment.NewLine, diagnosticLines)}";
     private static System.Windows.Media.Brush Brush(string color) => new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
+
+    private void OnWindowStateChanged(object? sender, EventArgs e)
+    {
+        if (WindowState is WindowState.Normal or WindowState.Maximized)
+            lastVisibleWindowState = WindowState;
+        if (WindowState == WindowState.Minimized)
+            HideToTray();
+    }
+
+    private void RestoreWindowPlacement()
+    {
+        var areas = Forms.Screen.AllScreens.Select(screen => ToLogicalWorkArea(screen.WorkingArea)).ToArray();
+        var saved = settings.WindowLeft is { } left && settings.WindowTop is { } top && settings.WindowWidth is { } width && settings.WindowHeight is { } height
+            ? new WindowBounds(left, top, width, height)
+            : (WindowBounds?)null;
+        var placement = WindowGeometry.Restore(saved, areas);
+        Left = placement.Left;
+        Top = placement.Top;
+        Width = placement.Width;
+        Height = placement.Height;
+        lastVisibleWindowState = settings.WindowWasMaximized ? WindowState.Maximized : WindowState.Normal;
+        if (settings.WindowWasMaximized)
+            Dispatcher.BeginInvoke(() => WindowState = WindowState.Maximized);
+    }
+
+    private WorkArea ToLogicalWorkArea(System.Drawing.Rectangle physical)
+    {
+        var dpi = VisualTreeHelper.GetDpi(this);
+        return new WorkArea(physical.Left / dpi.DpiScaleX, physical.Top / dpi.DpiScaleY, physical.Width / dpi.DpiScaleX, physical.Height / dpi.DpiScaleY);
+    }
+
+    private void CaptureWindowPlacement()
+    {
+        if (!IsLoaded) return;
+        var bounds = WindowState == WindowState.Normal
+            ? new Rect(Left, Top, Width, Height)
+            : RestoreBounds;
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+        settings.WindowLeft = bounds.Left;
+        settings.WindowTop = bounds.Top;
+        settings.WindowWidth = bounds.Width;
+        settings.WindowHeight = bounds.Height;
+        settings.WindowWasMaximized = lastVisibleWindowState == WindowState.Maximized;
+    }
 }

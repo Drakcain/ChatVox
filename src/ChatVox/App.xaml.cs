@@ -5,20 +5,48 @@ using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
 using Microsoft.Win32;
 using ChatVox.Settings;
+using ChatVox.Runtime;
 
 namespace ChatVox;
 
 public partial class App : System.Windows.Application
 {
+    private SingleInstanceCoordinator? singleInstance;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
         SetTheme(AppearanceMode.Dark);
         base.OnStartup(e);
+        singleInstance = new SingleInstanceCoordinator(ShowExistingWindow);
+        if (!singleInstance.TryBecomePrimary())
+        {
+            singleInstance.SignalExistingInstance();
+            Shutdown();
+            return;
+        }
+        var window = new MainWindow();
+        MainWindow = window;
+        window.Show();
+        singleInstance.StartListening();
         SessionEnding += (_, _) =>
         {
             if (MainWindow is MainWindow window) window.PrepareForSystemShutdown();
         };
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        singleInstance?.Dispose();
+        base.OnExit(e);
+    }
+
+    private void ShowExistingWindow()
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (MainWindow is MainWindow window) window.RestoreFromSecondaryLaunch();
+        });
     }
 
     public static void SetTheme(AppearanceMode requested)
