@@ -1,15 +1,18 @@
 # Where is my installer?
 
-Use this folder when you want to install or share the current ChatVox build:
+For normal users, download the current installer from the public
+[GitHub Releases page](https://github.com/Drakcain/ChatVox/releases).
+
+For local development, the current freshly built installer is placed in:
 
 `READY TO INSTALL`
 
-It contains one installer named like this:
+It is named like this:
 
-`ChatVox-1.0.0-rc.4-Setup.exe`
+`ChatVox-<version>-Setup.exe`
 
-Older installers are kept here:
+Archived local installers are retained in:
 
 `releases`
 
-For normal installation, use only `READY TO INSTALL`.
+Use only the current installer from `READY TO INSTALL` for local validation.

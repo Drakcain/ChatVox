@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: GitHub Releases
+    url: https://github.com/Drakcain/ChatVox/releases
+    about: Download the current ChatVox installer.
+  - name: Security policy
+    url: https://github.com/Drakcain/ChatVox/blob/main/SECURITY.md
+    about: Read safe reporting guidance before posting sensitive information.

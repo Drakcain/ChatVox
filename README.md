@@ -26,6 +26,21 @@ Speech generation runs locally on the PC. ChatVox does not require a cloud TTS a
 - Local Kokoro voice runtime cache stored per Windows user while installed Program Files assets remain read-only.
 - Optional startup update checks using published ChatVox GitHub releases.
 
+## Project docs
+
+- [Twitch setup](docs/TWITCH-SETUP.md)
+- [Installer and build guide](docs/INSTALLER.md)
+- [Update behavior](docs/UPDATES.md)
+- [Voice compatibility](docs/VOICE-COMPATIBILITY.md)
+- [Changelog](CHANGELOG.md)
+
+## Support and legal
+
+- [Security policy](SECURITY.md)
+- [Privacy policy](PRIVACY.md)
+- [Third-party notices](THIRD-PARTY-NOTICES.txt)
+- [MIT license](LICENSE)
+
 ## Username pronunciation
 
 When **Read usernames** is enabled, ChatVox attempts to turn Twitch-style usernames into natural spoken text before sending them to Kokoro.
