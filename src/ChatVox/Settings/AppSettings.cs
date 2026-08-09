@@ -1,6 +1,5 @@
 using System.IO;
 using System.Text.Json;
-using ChatVox.Updates;
 
 namespace ChatVox.Settings;
 
@@ -20,10 +19,11 @@ public sealed class AppSettings
     public int MaxMessageLength { get; set; } = 200;
     public bool IgnoreCommands { get; set; } = true;
     public bool IgnoreUrls { get; set; } = true;
+    public bool IgnoreEmoji { get; set; } = true;
     public bool StartWithWindows { get; set; }
     public bool StartMinimizedToTray { get; set; }
+    public bool StartMinimizedWasExplicitlySet { get; set; }
     public bool AutomaticallyCheckForUpdates { get; set; } = true;
-    public UpdateChannel UpdateChannel { get; set; } = UpdateChannel.Preview;
     public DateTimeOffset? LastUpdateCheckUtc { get; set; }
     public DateTimeOffset? LastSuccessfulUpdateCheckUtc { get; set; }
     public string? LatestKnownEligibleRelease { get; set; }
@@ -48,7 +48,7 @@ public sealed class AppSettings
         IgnoredUsers ??= [.. DefaultIgnoredUsers];
         IgnoredUsers = IgnoredUsers.Select(x => x.Trim()).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (LastUpdateCheckUtc is { } last && last > DateTimeOffset.UtcNow.AddDays(1)) LastUpdateCheckUtc = null;
-        if (!Enum.IsDefined(UpdateChannel)) UpdateChannel = UpdateChannel.Preview;
+        if (StartMinimizedToTray) StartMinimizedWasExplicitlySet = true;
         if (WindowWidth is <= 0) WindowWidth = null;
         if (WindowHeight is <= 0) WindowHeight = null;
         if (WindowLeft is not { } left || double.IsNaN(left) || double.IsInfinity(left)) WindowLeft = null;

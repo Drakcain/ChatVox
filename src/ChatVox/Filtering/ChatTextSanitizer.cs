@@ -8,9 +8,10 @@ public static class ChatTextSanitizer
     private static readonly Regex Whitespace = new(@"\s+", RegexOptions.Compiled);
     private static readonly Regex SpaceBeforePunctuation = new(@"\s+([,.;!?])", RegexOptions.Compiled);
     private static readonly Regex Keycap = new(@"[0-9#*]\uFE0F?\u20E3", RegexOptions.Compiled);
-    public static string Normalize(string? text)
+    public static string Normalize(string? text, bool ignoreEmoji = true)
     {
         if (string.IsNullOrEmpty(text)) return string.Empty;
+        if (!ignoreEmoji) return SpaceBeforePunctuation.Replace(Whitespace.Replace(text, " ").Trim(), "$1");
         var builder = new StringBuilder(text.Length);
         foreach (var rune in Keycap.Replace(text, string.Empty).EnumerateRunes()) if (!IsEmojiPresentation(rune)) builder.Append(rune.ToString());
         return SpaceBeforePunctuation.Replace(Whitespace.Replace(builder.ToString(), " ").Trim(), "$1");

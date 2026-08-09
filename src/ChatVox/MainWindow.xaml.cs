@@ -51,7 +51,7 @@ public partial class MainWindow : Window
     private Forms.NotifyIcon? trayIcon;
     private Forms.ToolStripMenuItem? trayPauseItem;
     private UpdateCheckResult? pendingUpdate;
-    private string version = "1.0.0-rc.6";
+    private string version = "1.0.0-rc.7";
 
     public MainWindow()
     {
@@ -93,10 +93,10 @@ public partial class MainWindow : Window
         ReadNames.IsChecked = settings.ReadUsernames;
         IgnoreCommands.IsChecked = settings.IgnoreCommands;
         IgnoreUrls.IsChecked = settings.IgnoreUrls;
+        IgnoreEmoji.IsChecked = settings.IgnoreEmoji;
         StartWithWindows.IsChecked = startupService.Read().Enabled;
         StartMinimized.IsChecked = settings.StartMinimizedToTray;
         AutomaticUpdates.IsChecked = settings.AutomaticallyCheckForUpdates;
-        UpdateChannelSelector.SelectedIndex = settings.UpdateChannel == UpdateChannel.Stable ? 0 : 1;
         IgnoredUsers.Text = string.Join(", ", settings.IgnoredUsers);
         MaxQueue.Text = settings.MaxPending.ToString();
         MaxAge.Text = settings.MaxAgeSeconds.ToString();
@@ -125,9 +125,10 @@ public partial class MainWindow : Window
         settings.ReadUsernames = ReadNames.IsChecked == true;
         settings.IgnoreCommands = IgnoreCommands.IsChecked == true;
         settings.IgnoreUrls = IgnoreUrls.IsChecked == true;
+        settings.IgnoreEmoji = IgnoreEmoji.IsChecked != false;
         settings.StartMinimizedToTray = StartMinimized.IsChecked == true;
+        settings.StartMinimizedWasExplicitlySet = true;
         settings.AutomaticallyCheckForUpdates = AutomaticUpdates.IsChecked != false;
-        settings.UpdateChannel = UpdateChannelSelector.SelectedIndex == 0 ? UpdateChannel.Stable : UpdateChannel.Preview;
         settings.IgnoredUsers = IgnoredUsers.Text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
         settings.MaxPending = ReadInt(MaxQueue.Text, 6);
         settings.MaxAgeSeconds = ReadInt(MaxAge.Text, 30);
@@ -140,6 +141,7 @@ public partial class MainWindow : Window
         filter.IgnoreUrls = settings.IgnoreUrls;
         filter.SetIgnoredUsers(settings.IgnoredUsers);
         pipeline.ReadUsernames = settings.ReadUsernames;
+        pipeline.IgnoreEmoji = settings.IgnoreEmoji;
         pipeline.MaxMessageLength = settings.MaxMessageLength;
         SpeedValue.Text = $"{settings.Speed:0.0}×";
         VolumeValue.Text = $"{settings.Volume:P0}";
@@ -163,7 +165,7 @@ public partial class MainWindow : Window
         if (settings.AutomaticallyCheckForUpdates) _ = CheckForUpdatesCoreAsync(true);
         await ConnectCoreAsync(false);
         if (health.State == TwitchState.NetworkError) _ = RetryStartupRestoreAsync();
-        if (settings.StartMinimizedToTray) HideToTray();
+        if (StartupVisibilityPolicy.ShouldStartHidden(settings)) HideToTray();
     }
 
     private async Task RetryStartupRestoreAsync()
@@ -332,7 +334,7 @@ public partial class MainWindow : Window
         try
         {
             UpdateStatusText.Text = "Checking for updates...";
-            var result = await new UpdateService().CheckAsync(version, settings.UpdateChannel, appStopping.Token);
+            var result = await new UpdateService().CheckAsync(version, appStopping.Token);
             settings.LastUpdateCheckUtc = DateTimeOffset.UtcNow; SaveSettings();
             if (result.IsConfigured) settings.LastSuccessfulUpdateCheckUtc = DateTimeOffset.UtcNow;
             if (result.IsUpdateAvailable) settings.LatestKnownEligibleRelease = result.AvailableVersion;

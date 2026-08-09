@@ -14,7 +14,7 @@ Windows x64.
 - System tray, Start with Windows, start-minimized support, and true single-instance relaunch handling.
 - Responsive resizable window with safe monitor/DPI-aware placement restoration.
 - Per-user Kokoro voice runtime cache; installed Program Files assets stay read-only.
-- Optional startup update checks with Stable and Preview channels.
+- Optional startup update checks that follow the newest valid ChatVox release.
 
 ## Download and install
 

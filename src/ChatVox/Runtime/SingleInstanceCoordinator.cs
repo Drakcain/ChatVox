@@ -5,8 +5,8 @@ namespace ChatVox.Runtime;
 /// <summary>Per-user-session ownership and local SHOW handoff for ChatVox.</summary>
 public sealed class SingleInstanceCoordinator : IDisposable
 {
-    private const string MutexName = "Local\\ChatVox.SingleInstance.v1";
-    private const string ShowEventName = "Local\\ChatVox.ShowExisting.v1";
+    private readonly string mutexName;
+    private readonly string showEventName;
     private readonly Action showExisting;
     private readonly CancellationTokenSource stopping = new();
     private Mutex? ownership;
@@ -14,14 +14,20 @@ public sealed class SingleInstanceCoordinator : IDisposable
     private Task? listener;
     private bool primary;
 
-    public SingleInstanceCoordinator(Action showExisting) => this.showExisting = showExisting;
+    public SingleInstanceCoordinator(Action showExisting, string? identifier = null)
+    {
+        this.showExisting = showExisting;
+        var suffix = string.IsNullOrWhiteSpace(identifier) ? "ChatVox" : identifier;
+        mutexName = $"Local\\{suffix}.SingleInstance.v1";
+        showEventName = $"Local\\{suffix}.ShowExisting.v1";
+    }
     public bool IsPrimary => primary;
 
     public bool TryBecomePrimary()
     {
-        ownership = new Mutex(true, MutexName, out var createdNew);
+        ownership = new Mutex(true, mutexName, out var createdNew);
         primary = createdNew;
-        if (primary) showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+        if (primary) showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, showEventName);
         return primary;
     }
 
@@ -31,7 +37,7 @@ public sealed class SingleInstanceCoordinator : IDisposable
         {
             try
             {
-                using var existing = EventWaitHandle.OpenExisting(ShowEventName);
+                using var existing = EventWaitHandle.OpenExisting(showEventName);
                 existing.Set();
                 return true;
             }

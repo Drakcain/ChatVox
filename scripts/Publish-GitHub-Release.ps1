@@ -16,7 +16,7 @@ if ($actual -ne $expected) { throw 'Installer SHA-256 does not match its SHA ass
 $repo = 'Drakcain/ChatVox'
 if ((gh repo view $repo --json nameWithOwner --jq .nameWithOwner) -ne $repo) { throw 'Unexpected GitHub repository.' }
 if (!(git tag -l $tag)) { git tag -a $tag -m "ChatVox $version"; git push origin $tag }
-$notes = Get-Content -LiteralPath (Join-Path $root 'docs\RC6-RELEASE-NOTES.md') -Raw
+$notes = Get-Content -LiteralPath (Join-Path $root 'docs\RC7-RELEASE-NOTES.md') -Raw
 $args = @('release','create',$tag,$installer,$sha,'--repo',$repo,'--title',"ChatVox $version",'--notes',$notes)
 if ($version -match '-rc\.') { $args += '--prerelease' }
 gh @args

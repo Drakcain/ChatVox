@@ -7,8 +7,6 @@ using System.Text.RegularExpressions;
 
 namespace ChatVox.Updates;
 
-public enum UpdateChannel { Stable, Preview }
-
 public sealed record UpdateCheckResult(bool IsConfigured, bool IsUpdateAvailable, string SafeMessage, string? AvailableVersion = null, Uri? InstallerUri = null, Uri? Sha256Uri = null, long InstallerBytes = 0);
 public sealed record VerifiedUpdatePackage(string InstallerPath, string Version);
 
@@ -17,24 +15,24 @@ public sealed class UpdateService
 {
     public static readonly Uri ReleaseFeed = new("https://api.github.com/repos/Drakcain/ChatVox/releases");
     private readonly HttpClient http;
+    private readonly string updateRoot;
 
-    public UpdateService(HttpClient? httpClient = null)
+    public UpdateService(HttpClient? httpClient = null, string? updateRoot = null)
     {
         http = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        this.updateRoot = updateRoot ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ChatVox", "updates");
         if (!http.DefaultRequestHeaders.UserAgent.Any()) http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ChatVox", "1.0"));
         http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
     }
 
-    public Task<UpdateCheckResult> CheckAsync(string currentVersion, CancellationToken ct) => CheckAsync(currentVersion, UpdateChannel.Preview, ct);
-
-    public async Task<UpdateCheckResult> CheckAsync(string currentVersion, UpdateChannel channel, CancellationToken ct)
+    public async Task<UpdateCheckResult> CheckAsync(string currentVersion, CancellationToken ct)
     {
         try
         {
             using var response = await http.GetAsync(ReleaseFeed, ct);
             if (!response.IsSuccessStatusCode) return new(true, false, "Unable to check for updates right now.");
             using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
-            var latest = FindLatest(document.RootElement, currentVersion, channel);
+            var latest = FindLatest(document.RootElement, currentVersion);
             return latest is null ? new(true, false, "Up to date.") : latest;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
@@ -47,7 +45,7 @@ public sealed class UpdateService
         if (update.InstallerUri.Scheme != Uri.UriSchemeHttps || update.Sha256Uri.Scheme != Uri.UriSchemeHttps) throw new InvalidOperationException("Update assets must use HTTPS.");
         var name = $"ChatVox-{update.AvailableVersion}-Setup.exe";
         if (!string.Equals(Path.GetFileName(update.InstallerUri.AbsolutePath), name, StringComparison.Ordinal)) throw new InvalidOperationException("Unexpected installer asset.");
-        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ChatVox", "updates", "downloads");
+        var root = Path.Combine(updateRoot, "downloads");
         Directory.CreateDirectory(root);
         foreach (var partial in Directory.EnumerateFiles(root, "*.partial")) File.Delete(partial);
         var partialPath = Path.Combine(root, name + ".partial");
@@ -68,7 +66,9 @@ public sealed class UpdateService
             var shaText = await http.GetStringAsync(update.Sha256Uri, ct);
             var match = Regex.Match(shaText.Trim(), "^(?<hash>[A-Fa-f0-9]{64})\\s{2}(?<name>[^\\r\\n]+)$");
             if (!match.Success || !string.Equals(match.Groups["name"].Value, name, StringComparison.Ordinal)) throw new InvalidOperationException("Update checksum file is invalid.");
-            var actual = Convert.ToHexString(await SHA256.HashDataAsync(File.OpenRead(partialPath), ct));
+            string actual;
+            await using (var verifiedFile = File.OpenRead(partialPath))
+                actual = Convert.ToHexString(await SHA256.HashDataAsync(verifiedFile, ct));
             if (!string.Equals(actual, match.Groups["hash"].Value, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Update checksum did not match.");
             File.Move(partialPath, finalPath, true);
             return new(finalPath, update.AvailableVersion);
@@ -76,12 +76,12 @@ public sealed class UpdateService
         catch { if (File.Exists(partialPath)) File.Delete(partialPath); throw; }
     }
 
-    private static UpdateCheckResult? FindLatest(JsonElement releases, string currentVersion, UpdateChannel channel)
+    private static UpdateCheckResult? FindLatest(JsonElement releases, string currentVersion)
     {
         UpdateCheckResult? best = null;
         foreach (var release in releases.EnumerateArray())
         {
-            if (release.GetPropertyOrDefault("draft") || (channel == UpdateChannel.Stable && release.GetPropertyOrDefault("prerelease"))) continue;
+            if (release.GetPropertyOrDefault("draft")) continue;
             var tag = release.GetStringOrDefault("tag_name");
             if (tag is null || !TryParseVersion(tag.TrimStart('v'), out _)) continue;
             if (CompareVersions(tag.TrimStart('v'), currentVersion) <= 0) continue;
