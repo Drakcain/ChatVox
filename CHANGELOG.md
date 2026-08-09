@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.0.0-rc.11 - Release Candidate
+
+### Simplified
+
+- Removed the manual Username Pronunciation Overrides feature from the UI,
+  settings, and runtime pipeline. ChatVox now uses its automatic conservative
+  username pronunciation for every chatter, with no per-streamer setup.
+
+## 1.0.0-rc.10 - Release Candidate
+
+### Improved
+
+- Made the Username Pronunciation Overrides panel readable in dark mode.
+- Added clear instructions, an example, and an explicit reminder that the
+  field is optional and only needed when automatic username speech is wrong.
+
+## 1.0.0-rc.9 - Release Candidate
+
+### Added / improved
+
+- Added safe, high-confidence Twitch username pronunciation for common wrappers,
+  recognized word fragments, and familiar leetspeak forms.
+- Added a local username-pronunciation override setting for cases where a
+  streamer wants a specific pronunciation.
+- Added a 600-handle safety corpus and gold-reference pronunciation tests.
+- Clarified the test controls: **Test Message** speaks normal chat text as
+  entered, while **Test Username** uses the same username normalization as live
+  Twitch chat.
+
+### Preserved
+
+- Username normalization is speech-only; Twitch identity, filtering, and
+  EventSub behavior continue to use the original Twitch handle.
+- No eSpeak runtime or new pronunciation dependency is included.
+
 ## 1.0.0-rc.8 - Release Candidate
 
 - Fixed startup visibility so normal launches do not hide unless Start minimized is explicitly enabled.

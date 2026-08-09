@@ -22,4 +22,9 @@
     <ProjectReference Include="..\..\src\ChatVox\ChatVox.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Data\username-pronunciation-corpus.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Data\username-pronunciation-gold.tsv" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

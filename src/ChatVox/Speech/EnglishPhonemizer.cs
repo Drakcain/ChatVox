@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using DotNetG2P.English;
 using KokoroSharp.Processing;
 using MisakiSharp;
 
@@ -12,8 +13,9 @@ public sealed record EnglishPhonemization(string NormalizedText, int[] Tokens)
 
 public static class EnglishPhonemizer
 {
-    private static readonly Lazy<EnglishG2P> American = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: false, espeakFallback: _ => string.Empty));
-    private static readonly Lazy<EnglishG2P> British = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: true, espeakFallback: _ => string.Empty));
+    private static readonly Lazy<EnglishG2PEngine> OutOfVocabularyEnglish = new(() => new EnglishG2PEngine());
+    private static readonly Lazy<EnglishG2P> American = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: false, espeakFallback: EstimateOutOfVocabularyPhonemes));
+    private static readonly Lazy<EnglishG2P> British = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: true, espeakFallback: EstimateOutOfVocabularyPhonemes));
 
     public static EnglishPhonemization Phonemize(string? text, bool british)
     {
@@ -23,6 +25,23 @@ public static class EnglishPhonemizer
         var phonemes = (british ? British.Value : American.Value).Phonemize(normalized).Phonemes;
         var tokens = phonemes.Where(Tokenizer.Vocab.ContainsKey).Select(phoneme => Tokenizer.Vocab[phoneme]).ToArray();
         return new(normalized, tokens);
+    }
+
+    private static string EstimateOutOfVocabularyPhonemes(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+
+        try
+        {
+            // Apache-2.0, managed CMU/Flite LTS fallback: preserves natural
+            // username pronunciation without eSpeak or letter-by-letter speech.
+            return OutOfVocabularyEnglish.Value.ToIPA(text);
+        }
+        catch
+        {
+            // A malformed token must never interrupt the chat speech worker.
+            return string.Empty;
+        }
     }
 
     public static string Normalize(string? text)

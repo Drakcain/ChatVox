@@ -14,7 +14,7 @@ public class CoreTests
     [Fact]
     public void ReleaseCandidateVersionIsAuthoritative()
     {
-        Assert.StartsWith("1.0.0-rc.8", typeof(Voices).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+        Assert.StartsWith("1.0.0-rc.11", typeof(Voices).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
     }
 
     [Fact]
@@ -144,6 +144,16 @@ public class CoreTests
         Assert.Equal("\"cafe resume naive jalapeno Pokemon\"", EnglishPhonemizer.Normalize("\u201ccafé résumé naïve jalapeño Pokémon\u201d"));
     }
 
+    [Fact]
+    public void EnglishPhonemizerUsesManagedNaturalFallbackForUnknownUsernames()
+    {
+        foreach (var british in new[] { false, true })
+        {
+            var phonemization = EnglishPhonemizer.Phonemize("Drakcain", british);
+            Assert.NotEmpty(phonemization.Tokens);
+        }
+    }
+
     [Fact] public void Filters(){var f=new ChatFilter(["bad"]);Assert.False(f.Accept("a","!x"));Assert.False(f.Accept("a","https://x"));Assert.False(f.Accept("bad","hello"));Assert.True(f.Accept("a","hello"));Assert.True(f.Accept("a","hello"));}
     [Fact] public void DefaultAutomationAccountsAreIgnoredAndEditable(){var f=new ChatFilter(AppSettings.DefaultIgnoredUsers);Assert.False(f.Accept("Nightbot","normal message"));f.SetIgnoredUsers(["custombot"]);Assert.True(f.Accept("Nightbot","normal message"));Assert.False(f.Accept("custombot","normal message"));}
     [Fact] public void LongMessagesAreBoundedAndMultipleChattersAreAccepted(){var q=new FreshQueue();var p=new ChatPipeline(new ChatFilter(),q,new EventDeduplicator()){MaxMessageLength=200,ReadUsernames=false};Assert.True(p.Accept(new ChatEvent("viewer-a","Alice",new string('a',200),DateTimeOffset.UtcNow)));Assert.True(p.Accept(new ChatEvent("viewer-b","Bob","hello",DateTimeOffset.UtcNow)));Assert.False(p.Accept(new ChatEvent("long","Alice",new string('x',201),DateTimeOffset.UtcNow)));Assert.Equal(2,q.Count);}
@@ -156,6 +166,6 @@ public class CoreTests
     [Fact] public void DpapiStoreRoundTripAndReset(){var path=Path.Combine(Path.GetTempPath(),Guid.NewGuid()+".bin");var store=new DpapiAuthStore(path);store.Save(new TokenResponse("fake-access","fake-refresh",60));Assert.Equal("fake-access",store.Load()!.AccessToken);store.Clear();Assert.Null(store.Load());}
     [Fact] public void DpapiCorruptionFallsBack(){var path=Path.Combine(Path.GetTempPath(),Guid.NewGuid()+".bin");File.WriteAllBytes(path,[1,2,3]);Assert.Null(new DpapiAuthStore(path).Load());File.Delete(path);}
     [Fact] public void RetryBackoffIsBounded(){Assert.Equal(TimeSpan.FromSeconds(1),RetryPolicy.Delay(0));Assert.Equal(TimeSpan.FromSeconds(30),RetryPolicy.Delay(99));}
-    [Fact] public void MockEventReachesQueueOnce(){const string json="{\"metadata\":{\"message_type\":\"notification\",\"message_id\":\"test-event-001\"},\"payload\":{\"event\":{\"chatter_user_name\":\"TestViewer\",\"message\":{\"text\":\"hello ChatVox\"}}}}";var e=EventSubParser.Chat(json,DateTimeOffset.UnixEpoch)!;var q=new FreshQueue();var p=new ChatPipeline(new ChatFilter(),q,new EventDeduplicator());Assert.True(p.Accept(e));Assert.False(p.Accept(e));Assert.Equal("TestViewer said: hello ChatVox",q.Take(DateTimeOffset.UnixEpoch)!.Text);}
+    [Fact] public void MockEventReachesQueueOnce(){const string json="{\"metadata\":{\"message_type\":\"notification\",\"message_id\":\"test-event-001\"},\"payload\":{\"event\":{\"chatter_user_name\":\"TestViewer\",\"message\":{\"text\":\"hello ChatVox\"}}}}";var e=EventSubParser.Chat(json,DateTimeOffset.UnixEpoch)!;var q=new FreshQueue();var p=new ChatPipeline(new ChatFilter(),q,new EventDeduplicator());Assert.True(p.Accept(e));Assert.False(p.Accept(e));Assert.Equal("test viewer said: hello ChatVox",q.Take(DateTimeOffset.UnixEpoch)!.Text);}
     [Fact] public void BurstNotificationsAllReachQueue(){var q=new FreshQueue(6,TimeSpan.FromMinutes(1));var p=new ChatPipeline(new ChatFilter(),q,new EventDeduplicator());for(var i=1;i<=5;i++){var json=$"{{\"metadata\":{{\"message_type\":\"notification\",\"message_id\":\"burst-{i}\"}},\"payload\":{{\"event\":{{\"chatter_user_name\":\"Viewer\",\"message\":{{\"text\":\"{i}\"}}}}}}}}";Assert.True(p.Accept(EventSubParser.Chat(json,DateTimeOffset.UtcNow)!));}Assert.Equal(5,q.Count);}
 }

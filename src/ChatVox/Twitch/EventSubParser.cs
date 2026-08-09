@@ -11,9 +11,9 @@ public static class EventSubParser
         if(m.GetProperty("message_type").GetString()!="notification") return null;
         var e=r.GetProperty("payload").GetProperty("event"); var message=e.GetProperty("message");
         var text = StructuredText(message);
-        var chatter = e.GetProperty("chatter_user_name").GetString();
-        if (string.IsNullOrWhiteSpace(chatter) && e.TryGetProperty("chatter_user_login", out var login)) chatter = login.GetString();
-        return new(m.GetProperty("message_id").GetString()??"",chatter?.Trim() is { Length: > 0 } name ? name : "Viewer",text,now);
+        var chatter = ChatIdentity.Normalize(e.TryGetProperty("chatter_user_name", out var displayName) ? displayName.GetString() : null);
+        if (chatter is null) chatter = ChatIdentity.Normalize(e.TryGetProperty("chatter_user_login", out var login) ? login.GetString() : null);
+        return new(m.GetProperty("message_id").GetString()??"",chatter ?? "Viewer",text,now);
     }
     private static string StructuredText(JsonElement message)
     {

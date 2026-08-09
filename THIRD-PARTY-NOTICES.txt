@@ -1,5 +1,5 @@
 ChatVox Third-Party Notices
-Version: 1.0.0-rc.4
+Version: 1.0.0-rc.11
 Generated for the eSpeak-free English edition.
 
 ChatVox does not include eSpeak or eSpeak NG code, binaries, data files, or
@@ -17,6 +17,11 @@ MisakiSharp 1.0.0
 License: Apache License 2.0
 Source: https://github.com/Lyrcaxis/MisakiSharp
 NuGet package commit: b20a5b001001933cb95e1ad642458772ddb169fc
+
+DotNetG2P.English 1.10.0
+License: Apache License 2.0
+Source: https://github.com/ayutaz/dot-net-g2p
+Purpose: managed English out-of-vocabulary pronunciation fallback.
 
 Kokoro model and retained English voice assets
 License: Apache License 2.0

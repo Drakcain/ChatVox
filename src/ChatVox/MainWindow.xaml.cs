@@ -54,7 +54,7 @@ public partial class MainWindow : Window
     private Forms.NotifyIcon? trayIcon;
     private Forms.ToolStripMenuItem? trayPauseItem;
     private UpdateCheckResult? pendingUpdate;
-    private string version = "1.0.0-rc.8";
+    private string version = "1.0.0-rc.11";
 
     public MainWindow(LaunchReason launchReason = LaunchReason.Normal)
     {
@@ -153,7 +153,20 @@ public partial class MainWindow : Window
 
     private void SaveSettings() => settingsStore.Save(settings);
     private static int ReadInt(string input, int fallback) => int.TryParse(input, out var value) ? value : fallback;
-    private void Test(object sender, RoutedEventArgs e) { queue.Add(TestText.Text); AppendDiagnostic($"enqueue received depth={queue.Count}"); UpdateStatus(); }
+    private void TestMessage(object sender, RoutedEventArgs e) { queue.Add(TestText.Text); AppendDiagnostic($"enqueue received depth={queue.Count}"); UpdateStatus(); }
+    private void TestUsername(object sender, RoutedEventArgs e)
+    {
+        var normalized = UsernameSpeechNormalizer.Normalize(TestText.Text);
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            AppendDiagnostic("username test skipped: no readable username");
+            return;
+        }
+
+        queue.Add(normalized);
+        AppendDiagnostic($"username test normalized; enqueue received depth={queue.Count}");
+        UpdateStatus();
+    }
     private void TogglePause(object sender, RoutedEventArgs e) => SetPaused(!paused);
     private void Clear(object sender, RoutedEventArgs e) { queue.Clear(); UpdateStatus(); }
     private void Stop(object sender, RoutedEventArgs e) { kokoro.Stop(); AppendDiagnostic("Stop Speaking requested"); UpdateStatus(); }
