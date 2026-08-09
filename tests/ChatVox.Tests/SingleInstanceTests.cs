@@ -12,7 +12,6 @@ public sealed class SingleInstanceTests
         using var primary = new SingleInstanceCoordinator(() => shown.Set(), identifier);
         Assert.True(primary.TryBecomePrimary());
         primary.StartListening();
-        Thread.Sleep(100);
         using var secondary = new SingleInstanceCoordinator(() => throw new InvalidOperationException("Secondary must not own the listener."), identifier);
         Assert.False(secondary.TryBecomePrimary());
         Assert.True(secondary.SignalExistingInstance());

@@ -9,6 +9,7 @@ public sealed class SingleInstanceCoordinator : IDisposable
     private readonly string showEventName;
     private readonly Action showExisting;
     private readonly CancellationTokenSource stopping = new();
+    private readonly TaskCompletionSource listenerReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private Mutex? ownership;
     private EventWaitHandle? showEvent;
     private Task? listener;
@@ -51,11 +52,13 @@ public sealed class SingleInstanceCoordinator : IDisposable
         if (!primary || listener is not null || showEvent is null) return;
         listener = Task.Run(() =>
         {
+            listenerReady.TrySetResult();
             while (!stopping.IsCancellationRequested)
             {
                 if (showEvent.WaitOne(100)) showExisting();
             }
         });
+        listenerReady.Task.Wait(TimeSpan.FromSeconds(1));
     }
 
     public void Dispose()
