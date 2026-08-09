@@ -57,7 +57,7 @@ public sealed class Rc3UxTests
     [Fact]
     public void WindowsStartupCommandIsQuotedAndUsesTheExecutablePath()
     {
-        Assert.Equal("\"C:\\Program Files\\ChatVox\\ChatVox.exe\"", WindowsStartupService.CurrentCommand(@"C:\Program Files\ChatVox\ChatVox.exe"));
+        Assert.Equal("\"C:\\Program Files\\ChatVox\\ChatVox.exe\" --windows-startup", WindowsStartupService.CurrentCommand(@"C:\Program Files\ChatVox\ChatVox.exe"));
     }
 
     [Fact]
@@ -82,14 +82,14 @@ public sealed class Rc3UxTests
     {
         const string feed = """
         [
-          {"draft":false,"prerelease":true,"tag_name":"v1.0.0-rc.7","assets":[{"name":"ChatVox-1.0.0-rc.7-Setup.exe","browser_download_url":"https://unit.test/ChatVox-1.0.0-rc.7-Setup.exe","size":5},{"name":"ChatVox-1.0.0-rc.7-Setup.exe.sha256","browser_download_url":"https://unit.test/ChatVox-1.0.0-rc.7-Setup.exe.sha256","size":90}]},
-          {"draft":false,"prerelease":false,"tag_name":"v1.0.0-rc.6","assets":[{"name":"ChatVox-1.0.0-rc.6-Setup.exe","browser_download_url":"https://unit.test/ChatVox-1.0.0-rc.6-Setup.exe","size":5},{"name":"ChatVox-1.0.0-rc.6-Setup.exe.sha256","browser_download_url":"https://unit.test/ChatVox-1.0.0-rc.6-Setup.exe.sha256","size":90}]}
+          {"draft":false,"prerelease":true,"tag_name":"v1.0.0-rc.8","assets":[{"name":"ChatVox-1.0.0-rc.8-Setup.exe","browser_download_url":"https://unit.test/ChatVox-1.0.0-rc.8-Setup.exe","size":5},{"name":"ChatVox-1.0.0-rc.8-Setup.exe.sha256","browser_download_url":"https://unit.test/ChatVox-1.0.0-rc.8-Setup.exe.sha256","size":90}]},
+          {"draft":false,"prerelease":false,"tag_name":"v1.0.0-rc.7","assets":[{"name":"ChatVox-1.0.0-rc.7-Setup.exe","browser_download_url":"https://unit.test/ChatVox-1.0.0-rc.7-Setup.exe","size":5},{"name":"ChatVox-1.0.0-rc.7-Setup.exe.sha256","browser_download_url":"https://unit.test/ChatVox-1.0.0-rc.7-Setup.exe.sha256","size":90}]}
         ]
         """;
         using var http = new HttpClient(new StaticHandler(feed));
-        var result = await new UpdateService(http).CheckAsync("1.0.0-rc.6", CancellationToken.None);
+        var result = await new UpdateService(http).CheckAsync("1.0.0-rc.7", CancellationToken.None);
         Assert.True(result.IsUpdateAvailable);
-        Assert.Equal("1.0.0-rc.7", result.AvailableVersion);
+        Assert.Equal("1.0.0-rc.8", result.AvailableVersion);
     }
 
     [Fact]

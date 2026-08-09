@@ -14,7 +14,7 @@ public class CoreTests
     [Fact]
     public void ReleaseCandidateVersionIsAuthoritative()
     {
-        Assert.StartsWith("1.0.0-rc.7", typeof(Voices).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+        Assert.StartsWith("1.0.0-rc.8", typeof(Voices).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
     }
 
     [Fact]

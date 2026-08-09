@@ -10,6 +10,7 @@ using System.Windows.Media;
 using ChatVox.Filtering;
 using ChatVox.Logging;
 using ChatVox.Queue;
+using ChatVox.Runtime;
 using ChatVox.Settings;
 using ChatVox.Speech;
 using ChatVox.Twitch;
@@ -38,6 +39,8 @@ public partial class MainWindow : Window
     private readonly TwitchHealth health = new();
     private readonly CancellationTokenSource appStopping = new();
     private readonly WindowsStartupService startupService = new();
+    private readonly LaunchReason launchReason;
+    private readonly bool startHidden;
     private readonly SemaphoreSlim twitchGate = new(1, 1);
     private EventSubClient? eventSub;
     private CancellationTokenSource? twitchRun;
@@ -51,11 +54,12 @@ public partial class MainWindow : Window
     private Forms.NotifyIcon? trayIcon;
     private Forms.ToolStripMenuItem? trayPauseItem;
     private UpdateCheckResult? pendingUpdate;
-    private string version = "1.0.0-rc.7";
+    private string version = "1.0.0-rc.8";
 
-    public MainWindow()
+    public MainWindow(LaunchReason launchReason = LaunchReason.Normal)
     {
         InitializeComponent();
+        this.launchReason = launchReason;
         version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? version;
         AboutVersion.Text = "Version " + version;
         log.Write("APPLICATION", "startup version " + version);
@@ -70,12 +74,13 @@ public partial class MainWindow : Window
         voicesView.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(VoiceOption.FriendlyName), System.ComponentModel.ListSortDirection.Ascending));
         Voice.ItemsSource = voicesView;
         LoadSettings();
+        startHidden = StartupVisibilityPolicy.ShouldStartHidden(settings, launchReason);
         kokoro.Diagnostic += AppendDiagnostic;
         worker = new SpeechWorker(queue, kokoro, () => (settings.Voice, (float)settings.Speed, (float)settings.Volume, settings.SpeechGapMilliseconds), () => paused);
         worker.Diagnostic += AppendDiagnostic;
         worker.StateChanged += () => Dispatcher.BeginInvoke(UpdateStatus);
         worker.Diagnostic += line => { if (line.Contains("exception", StringComparison.OrdinalIgnoreCase) || line.Contains("stopped", StringComparison.OrdinalIgnoreCase)) log.Write("WORKER", line); };
-        AppendDiagnostic("queue/speech worker ready");
+        AppendDiagnostic($"queue/speech worker ready; launch={launchReason}; start hidden={startHidden}");
         InitializeTray();
         SourceInitialized += (_, _) => RestoreWindowPlacement();
         ContentRendered += async (_, _) => await InitializeConsumerStartupAsync();
@@ -127,7 +132,6 @@ public partial class MainWindow : Window
         settings.IgnoreUrls = IgnoreUrls.IsChecked == true;
         settings.IgnoreEmoji = IgnoreEmoji.IsChecked != false;
         settings.StartMinimizedToTray = StartMinimized.IsChecked == true;
-        settings.StartMinimizedWasExplicitlySet = true;
         settings.AutomaticallyCheckForUpdates = AutomaticUpdates.IsChecked != false;
         settings.IgnoredUsers = IgnoredUsers.Text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
         settings.MaxPending = ReadInt(MaxQueue.Text, 6);
@@ -162,10 +166,10 @@ public partial class MainWindow : Window
 
     private async Task InitializeConsumerStartupAsync()
     {
+        if (startHidden) HideToTray();
         if (settings.AutomaticallyCheckForUpdates) _ = CheckForUpdatesCoreAsync(true);
         await ConnectCoreAsync(false);
         if (health.State == TwitchState.NetworkError) _ = RetryStartupRestoreAsync();
-        if (StartupVisibilityPolicy.ShouldStartHidden(settings)) HideToTray();
     }
 
     private async Task RetryStartupRestoreAsync()
@@ -326,6 +330,14 @@ public partial class MainWindow : Window
             AppendDiagnostic("Windows startup setting could not be changed: " + ex.GetType().Name);
             Log("STARTUP", "startup change failed " + ex.GetType().Name);
         }
+    }
+
+    private void StartMinimizedChanged(object sender, RoutedEventArgs e)
+    {
+        if (loading) return;
+        settings.StartMinimizedWasExplicitlySet = true;
+        ApplySettings();
+        SaveSettings();
     }
 
     private async void CheckForUpdates(object sender, RoutedEventArgs e) => await CheckForUpdatesCoreAsync(false);

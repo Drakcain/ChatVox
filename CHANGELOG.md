@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-rc.8 - Release Candidate
+
+- Fixed startup visibility so normal launches do not hide unless Start minimized is explicitly enabled.
+- Added explicit Normal, Windows startup, post-install, and post-update launch reasons.
+- Post-install and post-update launches always open visibly.
+- Windows startup invokes ChatVox with its explicit launch context.
+
 ## 1.0.0-rc.7 - Release Candidate
 
 ### Fixed

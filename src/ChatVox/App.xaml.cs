@@ -25,7 +25,7 @@ public partial class App : System.Windows.Application
             Shutdown();
             return;
         }
-        var window = new MainWindow();
+        var window = new MainWindow(LaunchReasonParser.FromArguments(e.Args));
         MainWindow = window;
         window.Show();
         singleInstance.StartListening();

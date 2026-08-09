@@ -14,7 +14,7 @@ public sealed class WindowsStartupService
     public static string CurrentCommand(string? executablePath = null)
     {
         var path = executablePath ?? Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "ChatVox.exe");
-        return $"\"{Path.GetFullPath(path)}\"";
+        return $"\"{Path.GetFullPath(path)}\" --windows-startup";
     }
 
     public StartupState Read(string? executablePath = null)
