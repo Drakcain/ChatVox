@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-rc.12 - Release Candidate
+
+### Changed
+
+- Added the default-on **Ignore my own messages** speech filter. It compares the connected Twitch account with EventSub chat authors by stable Twitch user ID, with a case-insensitive login fallback.
+- Increased the default fresh-profile queue limit from 6 to 8 pending messages. Existing saved queue limits remain unchanged.
+
 ## Release visibility
 
 RC.1 through RC.4 were internal, pre-public release candidates. Their local

@@ -13,13 +13,14 @@ public sealed class AppSettings
     public double Speed { get; set; } = 1.0;
     public double Volume { get; set; } = 1.0;
     public bool ReadUsernames { get; set; } = true;
-    public int MaxPending { get; set; } = 6;
+    public int MaxPending { get; set; } = 8;
     public int MaxAgeSeconds { get; set; } = 30;
     public int SpeechGapMilliseconds { get; set; } = 500;
     public int MaxMessageLength { get; set; } = 200;
     public bool IgnoreCommands { get; set; } = true;
     public bool IgnoreUrls { get; set; } = true;
     public bool IgnoreEmoji { get; set; } = true;
+    public bool IgnoreOwnMessages { get; set; } = true;
     public bool StartWithWindows { get; set; }
     public bool StartMinimizedToTray { get; set; }
     public bool StartMinimizedWasExplicitlySet { get; set; }

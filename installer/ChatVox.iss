@@ -1,7 +1,7 @@
 #define MyAppName "ChatVox"
 [Setup]
 AppName={#MyAppName}
-AppVersion=1.0.0-rc.11
+AppVersion=1.0.0-rc.12
 AppId={{C4A56C35-1B17-48BD-B1C9-62D9EC22D6D1}
 DefaultDirName={autopf}\ChatVox
 DefaultGroupName={#MyAppName}

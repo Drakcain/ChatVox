@@ -1,5 +1,5 @@
 ChatVox Third-Party Notices
-Version: 1.0.0-rc.11
+Version: 1.0.0-rc.12
 Generated for the eSpeak-free English edition.
 
 ChatVox does not include eSpeak or eSpeak NG code, binaries, data files, or

@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace ChatVox.Twitch;
 
-public sealed record TokenValidation([property: JsonPropertyName("client_id")] string ClientId, [property: JsonPropertyName("user_id")] string UserId, [property: JsonPropertyName("expires_in")] int ExpiresIn);
+public sealed record TokenValidation([property: JsonPropertyName("client_id")] string ClientId, [property: JsonPropertyName("user_id")] string UserId, [property: JsonPropertyName("expires_in")] int ExpiresIn, [property: JsonPropertyName("login")] string? Login = null);
 public enum TokenValidationKind { Success, Unauthorized, TransientFailure }
 public sealed record TokenValidationResult(TokenValidationKind Kind, TokenValidation? Identity = null, int? HttpStatus = null, string? SafeDetail = null)
 {

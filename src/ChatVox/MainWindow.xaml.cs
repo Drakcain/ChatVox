@@ -54,7 +54,7 @@ public partial class MainWindow : Window
     private Forms.NotifyIcon? trayIcon;
     private Forms.ToolStripMenuItem? trayPauseItem;
     private UpdateCheckResult? pendingUpdate;
-    private string version = "1.0.0-rc.11";
+    private string version = "1.0.0-rc.12";
 
     public MainWindow(LaunchReason launchReason = LaunchReason.Normal)
     {
@@ -99,6 +99,7 @@ public partial class MainWindow : Window
         IgnoreCommands.IsChecked = settings.IgnoreCommands;
         IgnoreUrls.IsChecked = settings.IgnoreUrls;
         IgnoreEmoji.IsChecked = settings.IgnoreEmoji;
+        IgnoreOwnMessages.IsChecked = settings.IgnoreOwnMessages;
         StartWithWindows.IsChecked = startupService.Read().Enabled;
         StartMinimized.IsChecked = settings.StartMinimizedToTray;
         AutomaticUpdates.IsChecked = settings.AutomaticallyCheckForUpdates;
@@ -134,7 +135,8 @@ public partial class MainWindow : Window
         settings.StartMinimizedToTray = StartMinimized.IsChecked == true;
         settings.AutomaticallyCheckForUpdates = AutomaticUpdates.IsChecked != false;
         settings.IgnoredUsers = IgnoredUsers.Text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
-        settings.MaxPending = ReadInt(MaxQueue.Text, 6);
+        settings.IgnoreOwnMessages = IgnoreOwnMessages.IsChecked != false;
+        settings.MaxPending = ReadInt(MaxQueue.Text, 8);
         settings.MaxAgeSeconds = ReadInt(MaxAge.Text, 30);
         settings.SpeechGapMilliseconds = ReadInt(SpeechGap.Text, 500);
         settings.MaxMessageLength = ReadInt(MaxLength.Text, 200);
@@ -146,6 +148,7 @@ public partial class MainWindow : Window
         filter.SetIgnoredUsers(settings.IgnoredUsers);
         pipeline.ReadUsernames = settings.ReadUsernames;
         pipeline.IgnoreEmoji = settings.IgnoreEmoji;
+        pipeline.IgnoreOwnMessages = settings.IgnoreOwnMessages;
         pipeline.MaxMessageLength = settings.MaxMessageLength;
         SpeedValue.Text = $"{settings.Speed:0.0}×";
         VolumeValue.Text = $"{settings.Volume:P0}";
@@ -403,6 +406,8 @@ public partial class MainWindow : Window
     {
         activeAuth = auth;
         activeIdentity = identity;
+        pipeline.ConnectedUserId = identity.UserId;
+        pipeline.ConnectedLogin = identity.Login;
         twitchRun = CancellationTokenSource.CreateLinkedTokenSource(appStopping.Token);
         await StartEventSubAsync(twitchRun.Token);
         tokenMonitorTask = new TokenMonitor(tokens).RunAsync(
@@ -434,6 +439,12 @@ public partial class MainWindow : Window
         await Dispatcher.InvokeAsync(() =>
         {
             health.Validation(result);
+            if (result.Identity is not null)
+            {
+                activeIdentity = result.Identity;
+                pipeline.ConnectedUserId = result.Identity.UserId;
+                pipeline.ConnectedLogin = result.Identity.Login;
+            }
             Log("AUTH", "validation result " + result.Kind + (result.HttpStatus is null ? string.Empty : " HTTP " + result.HttpStatus));
             if (result.Kind == TokenValidationKind.TransientFailure) SetTwitchState(TwitchState.NetworkError, result.SafeDetail);
             else if (result.Kind == TokenValidationKind.Success && health.State == TwitchState.NetworkError && eventSub is not null) SetTwitchState(TwitchState.Connected);

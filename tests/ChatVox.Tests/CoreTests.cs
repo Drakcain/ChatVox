@@ -14,7 +14,7 @@ public class CoreTests
     [Fact]
     public void ReleaseCandidateVersionIsAuthoritative()
     {
-        Assert.StartsWith("1.0.0-rc.11", typeof(Voices).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+        Assert.StartsWith("1.0.0-rc.12", typeof(Voices).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class CoreTests
     [Fact] public void Queue(){var q=new FreshQueue(2,TimeSpan.FromSeconds(10));q.Add("a",DateTimeOffset.UnixEpoch);q.Add("b",DateTimeOffset.UnixEpoch.AddSeconds(1));q.Add("c",DateTimeOffset.UnixEpoch.AddSeconds(2));Assert.Equal("b",q.Take(DateTimeOffset.UnixEpoch.AddSeconds(2))!.Text);Assert.Null(q.Take(DateTimeOffset.UnixEpoch.AddSeconds(20)));}
     [Fact] public void QueueReportsExpiry(){var q=new FreshQueue(2,TimeSpan.FromSeconds(1));var expired=0;q.Expired+=count=>expired+=count;q.Add("a",DateTimeOffset.UnixEpoch);q.Purge(DateTimeOffset.UnixEpoch.AddSeconds(2));Assert.Equal(1,expired);}
     [Fact] public void DeviceCodeParses(){var d=JsonSerializer.Deserialize<DeviceCodeResponse>("{\"device_code\":\"x\",\"user_code\":\"ABCD\",\"verification_uri\":\"https://example.test\",\"expires_in\":60,\"interval\":5}")!;Assert.Equal("ABCD",d.UserCode);}
-    [Fact] public void TokenValidationParsesTwitchUnderscoreFields(){var value=JsonSerializer.Deserialize<TokenValidation>("{\"client_id\":\"app\",\"user_id\":\"broadcaster\",\"expires_in\":3600}")!;Assert.Equal("app",value.ClientId);Assert.Equal("broadcaster",value.UserId);}
+    [Fact] public void TokenValidationParsesTwitchIdentityFields(){var value=JsonSerializer.Deserialize<TokenValidation>("{\"client_id\":\"app\",\"user_id\":\"broadcaster\",\"login\":\"broadcaster_login\",\"expires_in\":3600}")!;Assert.Equal("app",value.ClientId);Assert.Equal("broadcaster",value.UserId);Assert.Equal("broadcaster_login",value.Login);}
     [Fact] public void DedupExpires(){var d=new EventDeduplicator(TimeSpan.FromSeconds(10),2);var n=DateTimeOffset.UnixEpoch;Assert.True(d.First("a",n));Assert.False(d.First("a",n));Assert.True(d.First("a",n.AddSeconds(11)));}
     [Fact] public void ReconnectUrlParses(){const string json="{\"payload\":{\"session\":{\"reconnect_url\":\"wss://example.test/reconnect\"}}}";Assert.Equal("wss://example.test/reconnect",EventSubParser.ReconnectUrl(json));}
     [Fact] public void DpapiStoreRoundTripAndReset(){var path=Path.Combine(Path.GetTempPath(),Guid.NewGuid()+".bin");var store=new DpapiAuthStore(path);store.Save(new TokenResponse("fake-access","fake-refresh",60));Assert.Equal("fake-access",store.Load()!.AccessToken);store.Clear();Assert.Null(store.Load());}

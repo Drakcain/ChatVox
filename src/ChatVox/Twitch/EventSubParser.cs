@@ -13,8 +13,14 @@ public static class EventSubParser
         var text = StructuredText(message);
         var chatter = ChatIdentity.Normalize(e.TryGetProperty("chatter_user_name", out var displayName) ? displayName.GetString() : null);
         if (chatter is null) chatter = ChatIdentity.Normalize(e.TryGetProperty("chatter_user_login", out var login) ? login.GetString() : null);
-        return new(m.GetProperty("message_id").GetString()??"",chatter ?? "Viewer",text,now);
+        var chatterUserId = OptionalString(e, "chatter_user_id");
+        var chatterLogin = OptionalString(e, "chatter_user_login");
+        return new(m.GetProperty("message_id").GetString()??"",chatter ?? "Viewer",text,now,chatterUserId,chatterLogin);
     }
+    private static string? OptionalString(JsonElement element, string property) =>
+        element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(value.GetString())
+            ? value.GetString()!.Trim()
+            : null;
     private static string StructuredText(JsonElement message)
     {
         if (!message.TryGetProperty("fragments", out var fragments) || fragments.ValueKind != JsonValueKind.Array)

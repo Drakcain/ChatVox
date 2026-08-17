@@ -193,6 +193,6 @@ See:
 
 ## Current release
 
-Current public prerelease: **ChatVox 1.0.0-rc.11**.
+Current public prerelease: **ChatVox 1.0.0-rc.12**.
 
 See the [GitHub Releases page](https://github.com/Drakcain/ChatVox/releases) for the current installer and checksum.
